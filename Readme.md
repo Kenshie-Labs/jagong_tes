@@ -17,3 +17,12 @@ Version :
 
 - 1.0 masih polosan
 - 1.1 update link url
+
+[@index.html](file:///E:/jagong/index.html) (Ask Only) saya ingin memigrasikan dataDosen untuk memanfaatkan netlify serverless function. Oleh karena itu berikan saya petunjuk untuk melakukan refactoring kode ini menjadi :
+project-saya/
+├── index.html
+├── script.js
+└── netlify/
+    └── functions/
+        └── akses-rahasia.js
+        
