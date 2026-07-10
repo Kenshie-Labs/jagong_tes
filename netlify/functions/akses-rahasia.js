@@ -871,12 +871,16 @@ exports.handler = async (event, context) => {
   try {
     return {
       statusCode: 200,
+      headers: {
+        "Content-Type": "application/json" // Penting: Menentukan Content-Type
+      },
       body: JSON.stringify(dataDosen),
     };
   } catch (error) {
+    console.error("Error in Netlify Function:", error); // Tambahkan logging
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Failed to fetch data" }),
+      body: JSON.stringify({ error: "Failed to fetch data from serverless function." }),
     };
   }
 };

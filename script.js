@@ -12,8 +12,26 @@ async function muatDataDosen() {
     }
     dataDosenGlobal = await response.json();
     console.log("Data Dosen berhasil dimuat:", dataDosenGlobal);
-    // Setelah data dimuat, Anda mungkin ingin memanggil fungsi inisialisasi UI di sini
-    pilihProdi(); // Panggil fungsi untuk mengisi dropdown prodi
+
+    // Pindahkan inisialisasi radio button ke sini, gunakan dataDosenGlobal
+    const prodiContainer = document.getElementById("prodi-container");
+    Object.keys(dataDosenGlobal).forEach((prodi, idx) => { // Perbaikan di sini: dataDosenGlobal
+      const div = document.createElement("div");
+      div.className = "radio-item";
+      div.innerHTML = `
+          <input type="radio" name="prodi_option" id="prodi_${idx}" value="${prodi}" onchange="pilihProdi(this.value)">
+          <label style="font-weight: normal; margin:0; cursor:pointer;" for="prodi_${idx}">${prodi}</label>
+      `;
+      prodiContainer.appendChild(div);
+    });
+    
+    // Pilih prodi pertama secara default dan panggil pilihProdi untuk mengisi dropdown dosen
+    if (Object.keys(dataDosenGlobal).length > 0) {
+        const firstProdiKey = Object.keys(dataDosenGlobal)[0];
+        document.getElementById(`prodi_0`).checked = true; // Asumsi id prodi_0 adalah prodi pertama
+        pilihProdi(firstProdiKey); 
+    }
+
   } catch (error) {
     console.error("Gagal memuat data dosen:", error);
     tampilkanError("Gagal memuat data. Mohon coba lagi.");
@@ -23,34 +41,21 @@ async function muatDataDosen() {
 // Panggil saat halaman dimuat
 document.addEventListener("DOMContentLoaded", muatDataDosen);
 
-// Otomatis men-generate semua Radio Buttons Prodi ke layar
-const prodiContainer = document.getElementById("prodi-container");
-Object.keys(dataDosen).forEach((prodi, idx) => {
-  const div = document.createElement("div");
-  div.className = "radio-item";
-  div.innerHTML = `
-      <input type="radio" name="prodi_option" id="prodi_${idx}" value="${prodi}" onchange="pilihProdi(this.value)">
-      <label style="font-weight: normal; margin:0; cursor:pointer;" for="prodi_${idx}">${prodi}</label>
-  `;
-  prodiContainer.appendChild(div);
-});
+function pilihProdi(namaProdiYangDipilih) { // Menerima argumen
+  prodiTerpilih = namaProdiYangDipilih; // Set variabel global
+  const selectDosen = document.getElementById("dosen-select"); // ID select box di index.html
+  selectDosen.innerHTML = '<option value="">-- Pilih Nama Dosen --</option>'; // Reset options
 
-function pilihProdi() {
-  const prodiTerpilih = document.querySelector(
-    'input[name="prodi"]:checked',
-  ).value;
-  const selectDosen = document.getElementById("selectDosen");
-  selectDosen.innerHTML = '<option value="">Pilih Dosen</option>'; // Reset options
-
-  // Pastikan dataDosenGlobal sudah ada
+  // Pastikan dataDosenGlobal sudah ada dan prodi yang dipilih tersedia
   if (dataDosenGlobal[prodiTerpilih]) {
-    dataDosenGlobal[prodiTerpilih].forEach((dosen) => {
+    dataDosenGlobal[prodiTerpilih].forEach((dosen, index) => {
       const opt = document.createElement("option");
-      opt.value = dosen.nama;
+      opt.value = index; // Menggunakan index sebagai nilai option
       opt.textContent = dosen.nama;
       selectDosen.appendChild(opt);
     });
   }
+  sembunyikanError();
 }
 
 // Fungsi tombol mata untuk sembunyikan/tampilkan password
@@ -94,35 +99,39 @@ function keHalaman1() {
 
 function keHalaman2() {
   sembunyikanError();
-  const prodiTerpilih = document.querySelector(
-    'input[name="prodi"]:checked',
-  ).value;
-  const selectDosen = document.getElementById("selectDosen");
-  const idxDosen = selectDosen.selectedIndex;
+  // Gunakan prodiTerpilih yang sudah di-set oleh fungsi pilihProdi
+  // Tidak perlu querySelector lagi karena prodiTerpilih sudah global
+  // Pastikan variabel global `prodiTerpilih` sudah terisi
+  if (!prodiTerpilih) { // Pastikan prodiTerpilih sudah di set
+      tampilkanError("Peringatan: Silakan pilih Program Studi terlebih dahulu!");
+      return;
+  }
 
-  if (idxDosen === 0) {
-    tampilkanError("Mohon pilih dosen terlebih dahulu.");
+  const selectDosen = document.getElementById("dosen-select"); // Pastikan ID ini benar
+  const idxDosen = selectDosen.value; // Ini adalah index dosen, bukan nama
+
+  if (idxDosen === "") {
+    tampilkanError("Peringatan: Silakan pilih nama dosen!");
     return;
   }
 
   // Gunakan dataDosenGlobal yang sudah dimuat
-  const objekDosen = dataDosenGlobal[prodiTerpilih][idxDosen - 1]; // -1 karena "Pilih Dosen" adalah indeks 0
+  // idxDosen adalah value dari option, yang kita set sebagai index array
+  const objekDosen = dataDosenGlobal[prodiTerpilih][parseInt(idxDosen)]; 
 
   if (objekDosen) {
     dosenTerpilih = objekDosen.nama;
     passwordTarget = objekDosen.pass;
     driveTarget = objekDosen.drive;
 
-    // Update UI dengan data yang relevan
-    document.getElementById("displayDosen").textContent = dosenTerpilih;
-    document.getElementById("displayProdi").textContent = prodiTerpilih;
-    // ... update elemen lain di halaman 2 dan 3
+    document.getElementById("review-prodi").textContent = prodiTerpilih;
+    document.getElementById("review-dosen").textContent = dosenTerpilih;
 
-    // Lanjutkan ke halaman 2
-    document.getElementById("page1").classList.remove("active");
-    document.getElementById("page2").classList.add("active");
-    document.getElementById("step1").classList.remove("active");
-    document.getElementById("step2").classList.add("active");
+    document.getElementById("page-1").classList.remove("active");
+    document.getElementById("page-2").classList.add("active");
+
+    document.getElementById("badge-1").classList.remove("active");
+    document.getElementById("badge-2").classList.add("active");
   } else {
     tampilkanError("Data dosen tidak ditemukan.");
   }
